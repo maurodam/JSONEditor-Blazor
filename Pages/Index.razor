@@ -1,0 +1,105 @@
+﻿@page "/"
+@using Newtonsoft.Json
+@using System.Data
+
+<h3>JSON Editor</h3>
+
+<div class="container-fluid h-100 d-flex flex-column">
+    <div class="row">
+        <div class="col-md-12">
+            <textarea @bind="jsonString" class="form-control" rows="10"></textarea>
+            <br />
+            <button class="btn btn-primary" @onclick="LoadJson">Load JSON</button>
+        </div>
+        <div class="row mt-2 flex-grow-1">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        @foreach (DataColumn column in dataTable.Columns)
+                        {
+                            <th>@column.ColumnName</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (DataRow row in dataTable.Rows)
+                    {
+                        <tr>
+                            @foreach (DataColumn column in dataTable.Columns)
+                            {
+                                <td>
+                                    <input type="text" value="@row[column.ColumnName]" @oninput="e => UpdateCellValue(row, column.ColumnName, e)" />
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="row mt-2">
+        <div class="col-md-12">
+            <button class="btn btn-success" @onclick="SaveJson">Save JSON</button>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger" role="alert">
+        @errorMessage
+    </div>
+}
+
+@code {
+    private DataTable dataTable = new DataTable();
+    private string jsonString = "";
+    private string errorMessage = "";
+
+    private Boolean Check()
+    {
+        var result = true;
+
+        if (string.IsNullOrEmpty(jsonString))
+            result = false;
+
+        return result;
+    }
+
+    private void LoadJson()
+    {
+        if (!Check())
+            return;
+
+        try
+        {
+            dataTable = JsonConvert.DeserializeObject<DataTable>(jsonString); 
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Errore durante il caricamento del JSON: {ex.Message}";
+            Console.WriteLine(errorMessage);
+        }
+    }
+
+    private void UpdateCellValue(DataRow row, string columnName, ChangeEventArgs e)
+    {
+        row[columnName] = e.Value.ToString();
+    }
+
+    private void SaveJson()
+    {
+        if (!jsonString.StartsWith("[") || !jsonString.EndsWith("]"))
+            jsonString = "[" + jsonString + "]";
+
+        try
+        {
+            jsonString = JsonConvert.SerializeObject(dataTable, Formatting.Indented);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred: {ex.Message}";
+            throw;
+        }
+    }
+}

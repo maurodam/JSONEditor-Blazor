@@ -1,15 +1,17 @@
 ﻿@page "/"
 @using Newtonsoft.Json
 @using System.Data
+@inject IJSRuntime JSRuntime
 
 <h3>JSON Editor</h3>
 
 <div class="container-fluid h-100 d-flex flex-column">
     <div class="row">
         <div class="col-md-12">
-            <textarea @bind="jsonString" class="form-control" rows="10"></textarea>
+            <textarea @bind="jsonString" class="form-control" id="form-control" rows="10"></textarea>
             <br />
             <button class="btn btn-primary" @onclick="LoadJson">Load JSON</button>
+            <button type="button" class="btn btn-primary" @onclick="CopyTextToClipboard">Copy to clipboard</button>
         </div>
         <div class="row mt-2 flex-grow-1">
             <table class="table table-bordered">
@@ -43,6 +45,15 @@
         </div>
     </div>
 </div>
+
+
+<script>
+    function copyClipboard() {
+        var copyText = document.getElementById("form-control");
+        copyText.select();
+        document.execCommand("copy");
+    }
+</script>
 
 @if (!string.IsNullOrEmpty(errorMessage))
 {
@@ -101,5 +112,10 @@
             errorMessage = $"An error occurred: {ex.Message}";
             throw;
         }
+    }
+
+    private async Task CopyTextToClipboard()
+    {
+        await JSRuntime.InvokeVoidAsync("copyClipboard");
     }
 }
